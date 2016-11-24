@@ -1,86 +1,96 @@
 const MongoClient = require('mongodb').MongoClient;
-const uuid = require('node-uuid@1.4.3').v4;
-const SUCCESS = {"result": "success"};
+const uuid = require('node-uuid').v4;
 
-function writeNote(db, {id, title, text, read}) {
+const SUCCESS = {
+  result: 'success'
+};
+
+function writeNote(db, note) {
   return new Promise((resolve, reject) => {
     try {
       db
         .collection('notes')
-        .insertOne({
-          id,
-          title,
-          text,
-          read
-        });
-      resolve(SUCCESS);
-    } catch(err) {
+        .insertOne(note);
+      resolve(JSON.stringify(SUCCESS));
+    } catch (err) {
       reject(err);
     }
   });
 }
 
-function addNote(db, {title, text} = {}) {
-  const read = false;
-
-  return writeNote(db, {
+function addNote(db, note) {
+  if (!note) {
+    return Promise.reject();
+  }
+  return writeNote(db, Object.assign({}, note, {
     id: uuid(),
-    title,
-    text,
-    read,
-  });
+    read: false
+  }));
 }
 
-function updateNote(db, {id, title, text, read} = {}) {
-  read = read === 'false' ? false : true;
+function updateNote(db, note) {
+  if (!note) {
+    return Promise.reject();
+  }
   return new Promise((resolve, reject) => {
     try {
       db
         .collection('notes')
-        .updateOne({id}, {
-          id,
-          title,
-          text,
-          read
-        });
-        resolve(SUCCESS)
-    } catch(err) {
+        .updateOne({id: note.id}, Object.assign({}, note, {
+          read: note.read && note.read === 'false'
+        }));
+      resolve(JSON.stringify(SUCCESS));
+    } catch (err) {
       reject(err);
     }
   });
 }
 
-function getNotes(db, filter = {}) {
+function getNotes(db, filter) {
+  filter = filter || {};
   return new Promise((resolve, reject) => {
     db.collection('notes').find(filter).toArray((err, data) => {
+      if (err) {
+        reject(err);
+      }
       resolve(data);
     });
   });
 }
 
-exports.handler = function(event, context, done) {
-  const {MONGO_URL} = event.stageVariables;
+exports.handler = function handler(event, context, done) {
+  const MONGO_URL = event.stageVariables.MONGO_URL || null;
   MongoClient.connect(MONGO_URL, function (err, db) {
-    if(err) {
-      return done(err);
+    if (err) {
+      return done(null, err);
     }
 
-    switch(event.context.httpMethod) {
+    switch (event.context.httpMethod) {
       case 'POST':
         addNote(db, event.bodyJson)
-          .then(res => done(null, res));
+          .then(res => {
+            db.close();
+            done(null, res);
+          });
         break;
       case 'PUT':
         updateNote(db, event.bodyJson)
-          .then(res => done(null, res));
+          .then(res => {
+            db.close();
+            done(null, res);
+          });
         break;
       case 'GET':
         return getNotes(db)
-          .then(res => done(null, res));
+          .then(res => {
+            db.close();
+            done(null, res);
+          });
       default:
-        done(null, {
-          "result": "unhandled request"
-        });
+        db.close();
+        done(null, JSON.stringify({
+          result: 'unhandled request'
+        }));
     }
   });
 };

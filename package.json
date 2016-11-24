@@ -1,0 +1,23 @@
+{
+  "name": "lambdasync-example",
+  "version": "1.0.0",
+  "description": "Example project for a `Function as a Service` API deployed by [Lambdasync](https://github.com/fanderzon/lambdasync)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fanderzon/lambdasync-example.git"
+  },
+  "author": "Fredrik Andersson <f.anderzon@gmail.com> (http://fredrik.anderzon.se)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fanderzon/lambdasync-example/issues"
+  },
+  "homepage": "https://github.com/fanderzon/lambdasync-example#readme",
+  "dependencies": {
+    "mongodb": "2.2.11",
+    "node-uuid": "1.4.3"
+  }
+}

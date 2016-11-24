@@ -3,13 +3,13 @@
   "region": "eu-west-1",
   "profileName": "personal",
   "accountId": "598075967016",
-  "lambdaPolicy": "arn:aws:iam::598075967016:policy/LambdasyncInvokePolicy",
   "lambdaRole": "arn:aws:iam::598075967016:role/LambdasyncExecRole",
+  "lambdaPolicy": "arn:aws:iam::598075967016:policy/LambdasyncInvokePolicy",
   "lambdaArn": "arn:aws:lambda:eu-west-1:598075967016:function:lambdasync-example",
-  "apiGatewayId": "5wuwz0enx5",
+  "apiGatewayId": "rwcrsyjwma",
   "apiGatewayName": "api-lambdasync-example",
-  "apiGatewayPath": "api",
-  "apiGatewayRestApiId": "5wuwz0enx5",
-  "apiGatewayResourceId": "il8ajm",
-  "apiGatewayUrl": "https://5wuwz0enx5.execute-api.eu-west-1.amazonaws.com/prod/api"
+  "apiGatewayRestApiId": "rwcrsyjwma",
+  "apiGatewayResourceId": "tvopih",
+  "apiGatewayUrl": "https://rwcrsyjwma.execute-api.eu-west-1.amazonaws.com/prod/api",
+  "apiGatewayDeploymentId": "3lj7ib"
 }
