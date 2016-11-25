@@ -36,9 +36,7 @@ function updateNote(db, note) {
     try {
       db
         .collection('notes')
-        .updateOne({id: note.id}, Object.assign({}, note, {
-          read: note.read && note.read === 'false'
-        }));
+        .updateOne({id: note.id}, Object.assign({}, note));
       resolve(JSON.stringify(SUCCESS));
     } catch (err) {
       reject(err);
@@ -58,11 +56,11 @@ function getNotes(db, filter) {
   });
 }
 
-exports.handler = function handler(event, context, done) {
+exports.handler = function handler(event, context, callback) {
   const MONGO_URL = event.stageVariables.MONGO_URL || null;
   MongoClient.connect(MONGO_URL, function (err, db) {
     if (err) {
-      return done(null, err);
+      return callback(err);
     }
 
     switch (event.context.httpMethod) {
@@ -70,25 +68,25 @@ exports.handler = function handler(event, context, done) {
         addNote(db, event.bodyJson)
           .then(res => {
             db.close();
-            done(null, res);
+            callback(null, res);
           });
         break;
       case 'PUT':
         updateNote(db, event.bodyJson)
           .then(res => {
             db.close();
-            done(null, res);
+            callback(null, res);
           });
         break;
       case 'GET':
         return getNotes(db)
           .then(res => {
             db.close();
-            done(null, res);
+            callback(null, res);
           });
       default:
         db.close();
-        done(null, JSON.stringify({
+        callback(null, JSON.stringify({
           result: 'unhandled request'
         }));
     }
