@@ -11,27 +11,23 @@ function getIdFromPath(path) {
   return match && match[1];
 }
 
-function writeNote(db, note) {
+function addNote(db, note) {
   return new Promise((resolve, reject) => {
     db
       .collection('notes')
-      .insertOne(note, err => {
-        if (err) {
-          reject(err);
+      .insertOne(
+        Object.assign({}, note, {
+          id: uuid(),
+          read: false
+        }),
+        err => {
+          if (err) {
+            reject(err);
+          }
+          resolve(JSON.stringify(SUCCESS));
         }
-        resolve(JSON.stringify(SUCCESS));
-      });
+      );
   });
-}
-
-function addNote(db, note) {
-  if (!note) {
-    return Promise.reject();
-  }
-  return writeNote(db, Object.assign({}, note, {
-    id: uuid(),
-    read: false
-  }));
 }
 
 function updateNote(db, noteId, note) {
