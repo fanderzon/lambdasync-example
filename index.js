@@ -13,14 +13,14 @@ function getIdFromPath(path) {
 
 function writeNote(db, note) {
   return new Promise((resolve, reject) => {
-    try {
-      db
-        .collection('notes')
-        .insertOne(note);
-      resolve(JSON.stringify(SUCCESS));
-    } catch (err) {
-      reject(err);
-    }
+    db
+      .collection('notes')
+      .insertOne(note, err => {
+        if (err) {
+          reject(err);
+        }
+        resolve(JSON.stringify(SUCCESS));
+      });
   });
 }
 
@@ -34,19 +34,32 @@ function addNote(db, note) {
   }));
 }
 
-function updateNote(db, note) {
+function updateNote(db, noteId, note) {
   if (!note) {
     return Promise.reject();
   }
   return new Promise((resolve, reject) => {
-    try {
-      db
-        .collection('notes')
-        .updateOne({id: note.id}, Object.assign({}, note));
-      resolve(JSON.stringify(SUCCESS));
-    } catch (err) {
-      reject(err);
-    }
+    db
+      .collection('notes')
+      .updateOne({id: noteId}, Object.assign({}, note), err => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(JSON.stringify(SUCCESS));
+      });
+  });
+}
+
+function deleteNote(db, id) {
+  return new Promise((resolve, reject) => {
+    db
+      .collection('notes')
+      .deleteOne({id}, err => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(JSON.stringify(SUCCESS));
+      });
   });
 }
 
@@ -62,10 +75,15 @@ function getNotes(db, filter) {
   });
 }
 
+function respondAndClose(db, callback, error, response) {
+  db.close();
+  callback(error, response);
+}
+
 exports.handler = function handler(event, context, callback) {
   const MONGO_URL = event.stageVariables.MONGO_URL || null;
   const noteId = getIdFromPath(event.params.path.proxy);
-  
+
   MongoClient.connect(MONGO_URL, function (err, db) {
     if (err) {
       return callback(err);
@@ -74,30 +92,33 @@ exports.handler = function handler(event, context, callback) {
     switch (event.context.httpMethod) {
       case 'POST':
         addNote(db, event.bodyJson)
-          .then(res => {
-            db.close();
-            callback(null, res);
-          });
+          .then(res => respondAndClose(db, callback, null, res))
+          .catch(err => respondAndClose(db, callback, err, null));
         break;
       case 'PUT':
-        updateNote(db, event.bodyJson)
-          .then(res => {
-            db.close();
-            callback(null, res);
-          });
+        if (!noteId) {
+          return respondAndClose(db, callback, 'Missing id parameter', null);
+        }
+        updateNote(db, noteId, event.bodyJson)
+          .then(res => respondAndClose(db, callback, null, res))
+          .catch(err => respondAndClose(db, callback, err, null));
         break;
-
+      case 'DELETE':
+        if (!noteId) {
+          return respondAndClose(db, callback, 'Missing id parameter', null);
+        }
+        deleteNote(db, noteId)
+          .then(res => respondAndClose(db, callback, null, res))
+          .catch(err => respondAndClose(db, callback, err, null));
+        break;
       case 'GET':
         return getNotes(db)
-          .then(res => {
-            db.close();
-            callback(null, res);
-          });
+          .then(res => respondAndClose(db, callback, null, res))
+          .catch(err => respondAndClose(db, callback, err, null));
       default:
-        db.close();
-        callback(null, JSON.stringify({
+        respondAndClose(db, callback, null, {
           result: 'unhandled request'
-        }));
+        });
     }
   });
 };
