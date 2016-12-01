@@ -1,7 +1,9 @@
 const MongoClient = require('mongodb').MongoClient;
 const uuid = require('node-uuid').v4;
 
-const SUCCESS = 'success';
+const SUCCESS = {
+  result: 'success'
+};
 
 const idRegex = /^api\/(.*?)(\/|$)/;
 function getIdFromPath(path) {
@@ -22,7 +24,7 @@ function addNote(db, note) {
           if (err) {
             reject(err);
           }
-          resolve(SUCCESS);
+          resolve(JSON.stringify(SUCCESS));
         }
       );
   });
@@ -74,18 +76,16 @@ function getNotes(db, filter) {
 
 function respondAndClose(db, callback, error, response) {
   db.close();
-  callback(error, {
-    result: response
-  });
+  callback(error, response);
 }
 
 exports.handler = function handler(event, context, callback) {
-  const MONGO_URL = event.stageVariables.MONGO_URL || null;
+  const MONGO_URL = process.env.MONGO_URL || null;
   const noteId = getIdFromPath(event.params.path.proxy);
-  
+
   MongoClient.connect(MONGO_URL, function (err, db) {
     if (err) {
-      return callback(null, err);
+      return callback(err);
     }
 
     switch (event.context.httpMethod) {
@@ -115,7 +115,9 @@ exports.handler = function handler(event, context, callback) {
           .then(res => respondAndClose(db, callback, null, res))
           .catch(err => respondAndClose(db, callback, err, null));
       default:
-        respondAndClose(db, callback, null, 'unhandled request');
+        respondAndClose(db, callback, null, {
+          result: 'unhandled request'
+        });
     }
   });
 };
