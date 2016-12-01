@@ -21,7 +21,7 @@ Before we can test the API we just need to make the database url available to ou
 
 `lambdasync secret MONGO_URL=mongodb://xxxxxx:yyyyyy@dszzzzzz.mlab.com:49207/notetaker`
 
-Replace the URL with your own and Lambdasync will add this as a `stageVariable` that the service can access.
+Replace the URL with your own and Lambdasync will add this as a environment variable that the service can access through `process.env.MONGO_URL`.
 
 ## Testing the API
 
